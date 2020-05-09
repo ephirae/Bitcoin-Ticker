@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'coin_data.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
+import 'bitcoin_data.dart';
+import 'dart:convert';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -10,6 +12,32 @@ class PriceScreen extends StatefulWidget {
 
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = currenciesList[0];
+  BitcoinData data = BitcoinData();
+  double currencyAmt;
+  bool dataLoaded = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    getBitcoinData().then(
+          (val) {
+        setState(() {
+          print(currencyAmt);
+          currencyAmt = double.parse(val).roundToDouble();
+          dataLoaded = true;
+          print(currencyAmt);
+        });
+      },
+    );
+  }
+
+//  void updatedUI(dynamic bitcoinData) {
+//    setState(() {
+//      currencyAmt = double.parse(val).roundToDouble();
+//      dataLoaded = true;
+//    });
+//  }
 
   CupertinoPicker iOSPicker() {
     List<Text> currencyItems = new List<Text>();
@@ -22,7 +50,14 @@ class _PriceScreenState extends State<PriceScreen> {
       backgroundColor: Colors.lightBlue,
       itemExtent: 32,
       onSelectedItemChanged: (selectedCurrency) {
-        print(selectedCurrency);
+        getBitcoinData().then(
+          (val) {
+            currencyAmt = double.parse(val).roundToDouble();
+            setState(() {
+              dataLoaded = true;
+            });
+          },
+        );
       },
       children: currencyItems,
     );
@@ -45,16 +80,33 @@ class _PriceScreenState extends State<PriceScreen> {
       onChanged: (value) {
         setState(() {
           selectedCurrency = value;
+          getBitcoinData().then(
+            (val) {
+              currencyAmt = double.parse(val).roundToDouble();
+              setState(() {
+                dataLoaded = true;
+              });
+            },
+          );
         });
       },
     );
   }
 
+  Future<String> getBitcoinData() async {
+    setState(() {
+      dataLoaded = false;
+    });
+    var bitcoinData = await data.getData(selectedCurrency) ?? 0.0;
+    return bitcoinData[0]["price"];
+  }
+
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('🤑 Coin Ticker'),
+        title: Center(child: Text('🤑 Coin Ticker')),
       ),
       body: Column(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -70,14 +122,23 @@ class _PriceScreenState extends State<PriceScreen> {
               ),
               child: Padding(
                 padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: Text(
-                  '1 BTC = ? USD',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 20.0,
-                    color: Colors.white,
-                  ),
-                ),
+                child: dataLoaded
+                    ? Text(
+                        '1 BTC = $currencyAmt $selectedCurrency',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.white,
+                        ),
+                      )
+                    : Text(
+                        'Retrieving data...',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 20.0,
+                          color: Colors.white,
+                        ),
+                      ),
               ),
             ),
           ),
