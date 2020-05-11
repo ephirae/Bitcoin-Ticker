@@ -13,31 +13,37 @@ class PriceScreen extends StatefulWidget {
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = currenciesList[0];
   BitcoinData data = BitcoinData();
-  double currencyAmt;
   bool dataLoaded = false;
+
+  var currencyAmtList = {
+    'btcCurrencyAmt': '0.00',
+    'ethCurrencyAmt': '0.00',
+    'ltcCurrencyAmt': '0.00',
+  };
+
+  List<Widget> currencyCards = [];
 
   @override
   void initState() {
     super.initState();
+    updateUI();
+  }
 
+  void updateUI() {
     getBitcoinData().then(
-          (val) {
+      (val) {
         setState(() {
-          print(currencyAmt);
-          currencyAmt = double.parse(val).roundToDouble();
+          currencyAmtList['btcCurrencyAmt'] = double.parse(val[0]["price"]).toStringAsFixed(2);
+          currencyAmtList['ethCurrencyAmt'] = double.parse(val[1]["price"]).toStringAsFixed(2);
+          currencyAmtList['ltcCurrencyAmt'] = double.parse(val[2]["price"]).toStringAsFixed(2);
+
           dataLoaded = true;
-          print(currencyAmt);
+
+          currencyCards = generateCards();
         });
       },
     );
   }
-
-//  void updatedUI(dynamic bitcoinData) {
-//    setState(() {
-//      currencyAmt = double.parse(val).roundToDouble();
-//      dataLoaded = true;
-//    });
-//  }
 
   CupertinoPicker iOSPicker() {
     List<Text> currencyItems = new List<Text>();
@@ -50,14 +56,7 @@ class _PriceScreenState extends State<PriceScreen> {
       backgroundColor: Colors.lightBlue,
       itemExtent: 32,
       onSelectedItemChanged: (selectedCurrency) {
-        getBitcoinData().then(
-          (val) {
-            currencyAmt = double.parse(val).roundToDouble();
-            setState(() {
-              dataLoaded = true;
-            });
-          },
-        );
+        updateUI();
       },
       children: currencyItems,
     );
@@ -80,30 +79,67 @@ class _PriceScreenState extends State<PriceScreen> {
       onChanged: (value) {
         setState(() {
           selectedCurrency = value;
-          getBitcoinData().then(
-            (val) {
-              currencyAmt = double.parse(val).roundToDouble();
-              setState(() {
-                dataLoaded = true;
-              });
-            },
-          );
+          updateUI();
         });
       },
     );
   }
 
-  Future<String> getBitcoinData() async {
+  Future<dynamic> getBitcoinData() async {
     setState(() {
       dataLoaded = false;
     });
-    var bitcoinData = await data.getData(selectedCurrency) ?? 0.0;
-    return bitcoinData[0]["price"];
+    var bitcoinData = await data.getData(selectedCurrency);
+    return bitcoinData;
+  }
+
+  List<Card> generateCards() {
+    List<Card> cryptoCards = new List<Card>();
+
+    List<String> tempList = new List<String>();
+
+    currencyAmtList.forEach((key, value) {
+      print(value);
+      tempList.add(value);
+    });
+
+    for (int i = 0; i < cryptoList.length; i++) {
+      cryptoCards.add(
+        Card(
+          color: Colors.lightBlueAccent,
+          elevation: 5.0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10.0),
+          ),
+          child: Padding(
+            padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
+            child: dataLoaded
+                ? Text(
+                    '1 ${cryptoList[i]} = \$${tempList[i]} $selectedCurrency',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20.0,
+                      color: Colors.white,
+                    ),
+                  )
+                : Text(
+                    'Retrieving data...',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20.0,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ),
+      );
+    }
+    
+    return cryptoCards;
   }
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
       appBar: AppBar(
         title: Center(child: Text('🤑 Coin Ticker')),
@@ -114,31 +150,10 @@ class _PriceScreenState extends State<PriceScreen> {
         children: <Widget>[
           Padding(
             padding: EdgeInsets.fromLTRB(18.0, 18.0, 18.0, 0),
-            child: Card(
-              color: Colors.lightBlueAccent,
-              elevation: 5.0,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10.0),
-              ),
-              child: Padding(
-                padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
-                child: dataLoaded
-                    ? Text(
-                        '1 BTC = $currencyAmt $selectedCurrency',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20.0,
-                          color: Colors.white,
-                        ),
-                      )
-                    : Text(
-                        'Retrieving data...',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 20.0,
-                          color: Colors.white,
-                        ),
-                      ),
+            child: IntrinsicWidth(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: currencyCards,
               ),
             ),
           ),
