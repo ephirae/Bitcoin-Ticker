@@ -3,7 +3,6 @@ import 'coin_data.dart';
 import 'package:flutter/cupertino.dart';
 import 'dart:io' show Platform;
 import 'bitcoin_data.dart';
-import 'dart:convert';
 
 class PriceScreen extends StatefulWidget {
   @override
@@ -13,6 +12,7 @@ class PriceScreen extends StatefulWidget {
 class _PriceScreenState extends State<PriceScreen> {
   String selectedCurrency = currenciesList[0];
   BitcoinData data = BitcoinData();
+  CoinData coinData = CoinData();
   bool dataLoaded = false;
 
   var currencyAmtList = {
@@ -33,9 +33,12 @@ class _PriceScreenState extends State<PriceScreen> {
     getBitcoinData().then(
       (val) {
         setState(() {
-          currencyAmtList['btcCurrencyAmt'] = double.parse(val[0]["price"]).toStringAsFixed(2);
-          currencyAmtList['ethCurrencyAmt'] = double.parse(val[1]["price"]).toStringAsFixed(2);
-          currencyAmtList['ltcCurrencyAmt'] = double.parse(val[2]["price"]).toStringAsFixed(2);
+          currencyAmtList['btcCurrencyAmt'] =
+              coinData.currencyFormatter(val[0]["price"], selectedCurrency);
+          currencyAmtList['ethCurrencyAmt'] =
+              coinData.currencyFormatter(val[1]["price"], selectedCurrency);
+          currencyAmtList['ltcCurrencyAmt'] =
+              coinData.currencyFormatter(val[2]["price"], selectedCurrency);
 
           dataLoaded = true;
 
@@ -114,7 +117,7 @@ class _PriceScreenState extends State<PriceScreen> {
             padding: EdgeInsets.symmetric(vertical: 15.0, horizontal: 28.0),
             child: dataLoaded
                 ? Text(
-                    '1 ${cryptoList[i]} = \$${tempList[i]} $selectedCurrency',
+                    '1 ${cryptoList[i]} = ${tempList[i]} $selectedCurrency',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 20.0,
@@ -133,7 +136,7 @@ class _PriceScreenState extends State<PriceScreen> {
         ),
       );
     }
-    
+
     return cryptoCards;
   }
 
