@@ -99,7 +99,6 @@ class _PriceScreenState extends State<PriceScreen> {
     List<String> tempList = new List<String>();
 
     currencyAmtList.forEach((key, value) {
-      print(value);
       tempList.add(value);
     });
 
